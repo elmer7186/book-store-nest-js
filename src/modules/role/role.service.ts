@@ -1,6 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MapperService } from 'src/shared/mapper.service';
 import { Role } from './role.entity';
 import { RoleRepository } from './role.repository';
 
@@ -19,5 +18,50 @@ export class RoleService {
     return await this._roleRepository.findOne({
       where: { name },
     });
+  }
+
+  async get(id: number): Promise<Role> {
+    if (!id) {
+      throw new BadRequestException('id must be sent');
+    }
+
+    const role: Role = await this._roleRepository.findOne(id, {
+      where: { status: 'ACTIVE' },
+    });
+
+    if (!role) {
+      throw new NotFoundException();
+    }
+
+    return role;
+  }
+
+  async getAll(): Promise<Role[]> {
+    const roles: Role[] = await this._roleRepository.find({
+      where: { status: 'ACTIVE' },
+    });
+
+    return roles;
+  }
+
+  async create(role: Role): Promise<Role> {
+    const savedRole = await this._roleRepository.save(role);
+    return savedRole;
+  }
+
+  async update(id: number, role: Role): Promise<void> {
+    await this._roleRepository.update(id, role);
+  }
+
+  async delete(id: number): Promise<void> {
+    const roleExist = await this._roleRepository.findOne(id, {
+      where: { status: 'ACTIVE' },
+    });
+
+    if (!roleExist) {
+      throw new NotFoundException();
+    }
+
+    await this._roleRepository.update(id, { status: 'INACTIVE' });
   }
 }
