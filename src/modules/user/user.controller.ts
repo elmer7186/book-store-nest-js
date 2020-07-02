@@ -9,7 +9,6 @@ import {
   Post,
 } from '@nestjs/common';
 import { RoleService } from '../role/role.service';
-import { UserDto } from './dto/user.dto';
 import { UserDetails } from './user.details.entity';
 import { User } from './user.entity';
 import { UserService } from './user.service';
@@ -22,19 +21,19 @@ export class UserController {
   ) {}
 
   @Get(':id')
-  async getUser(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
+  async getUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
     const user = await this._userService.get(id);
     return user;
   }
 
   @Get()
-  async getUsers(): Promise<UserDto[]> {
+  async getUsers(): Promise<User[]> {
     const users = await this._userService.getAll();
     return users;
   }
 
   @Post()
-  async createUser(@Body() user: User): Promise<UserDto> {
+  async createUser(@Body() user: User): Promise<User> {
     const defaultRole = await this._roleService.getByName('GENERAL');
     user.roles = [defaultRole];
     user.details = new UserDetails();
