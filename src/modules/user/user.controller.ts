@@ -7,25 +7,27 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { RoleService } from '../role/role.service';
-import { UserDetails } from './user.details.entity';
+import { AuthGuard } from '@nestjs/passport';
 import { User } from './user.entity';
 import { UserService } from './user.service';
+import { Roles } from '../role/decorators/role.decorator';
+import { RoleGuard } from '../role/guards/role.guard';
 
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly _userService: UserService,
-    private readonly _roleService: RoleService,
-  ) {}
+  constructor(private readonly _userService: UserService) {}
 
   @Get(':id')
+  @Roles('ADMIN', 'AUTHOR')
+  @UseGuards(AuthGuard(), RoleGuard)
   async getUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
     const user = await this._userService.get(id);
     return user;
   }
 
+  @UseGuards(AuthGuard())
   @Get()
   async getUsers(): Promise<User[]> {
     const users = await this._userService.getAll();
@@ -34,9 +36,6 @@ export class UserController {
 
   @Post()
   async createUser(@Body() user: User): Promise<User> {
-    const defaultRole = await this._roleService.getByName('GENERAL');
-    user.roles = [defaultRole];
-    user.details = new UserDetails();
     const createdUser = await this._userService.create(user);
     return createdUser;
   }
@@ -54,5 +53,13 @@ export class UserController {
   async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
     await this._userService.delete(id);
     return true;
+  }
+
+  @Post('setRole/:userId/:roleId')
+  async setRoleToUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('roleId', ParseIntPipe) roleId: number,
+  ): Promise<boolean> {
+    return await this._userService.setRolToUser(userId, roleId);
   }
 }
