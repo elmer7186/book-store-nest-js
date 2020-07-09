@@ -7,14 +7,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { User } from './user.entity';
+import { ReadUserDto, UpdateUserDto } from './dto';
 import { UserService } from './user.service';
-import { Roles } from '../role/decorators/role.decorator';
-import { RoleGuard } from '../role/guards/role.guard';
-import { RoleType } from '../role/roletype.enum';
 
 @Controller('users')
 export class UserController {
@@ -23,44 +20,34 @@ export class UserController {
   @Get(':id')
   // @Roles(RoleType.ADMIN, RoleType.AUTHOR)
   // @UseGuards(AuthGuard(), RoleGuard)
-  async getUser(@Param('id', ParseIntPipe) id: number): Promise<User> {
-    const user = await this._userService.get(id);
-    return user;
+  getUser(@Param('id', ParseIntPipe) id: number): Promise<ReadUserDto> {
+    return this._userService.get(id);
   }
 
   @UseGuards(AuthGuard())
   @Get()
-  async getUsers(): Promise<User[]> {
-    const users = await this._userService.getAll();
-    return users;
-  }
-
-  @Post()
-  async createUser(@Body() user: User): Promise<User> {
-    const createdUser = await this._userService.create(user);
-    return createdUser;
+  getUsers(): Promise<ReadUserDto[]> {
+    return this._userService.getAll();
   }
 
   @Patch(':id')
-  async updateUser(
+  updateUser(
     @Param('id', ParseIntPipe) id: number,
-    @Body() user: User,
-  ): Promise<boolean> {
-    await this._userService.update(id, user);
-    return true;
+    @Body() user: UpdateUserDto,
+  ): Promise<ReadUserDto> {
+    return this._userService.update(id, user);
   }
 
   @Delete(':id')
-  async deleteUser(@Param('id', ParseIntPipe) id: number): Promise<boolean> {
-    await this._userService.delete(id);
-    return true;
+  deleteUser(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    return this._userService.delete(id);
   }
 
   @Post('setRole/:userId/:roleId')
-  async setRoleToUser(
+  setRoleToUser(
     @Param('userId', ParseIntPipe) userId: number,
     @Param('roleId', ParseIntPipe) roleId: number,
   ): Promise<boolean> {
-    return await this._userService.setRolToUser(userId, roleId);
+    return this._userService.setRolToUser(userId, roleId);
   }
 }
